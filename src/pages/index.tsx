@@ -12,6 +12,7 @@ import {
   TabList,
   Tab,
   AreaChart,
+  Metric,
 } from "@tremor/react";
 import { api } from "~/utils/api";
 import { useState } from "react";
@@ -41,9 +42,6 @@ const average = (list: number[]): number => {
   const sum = list.reduce((p, c) => p + c, 0);
   return sum / list.length;
 };
-
-const firstLetterUpperCase = (str: string) =>
-  `${str[0]?.toUpperCase()}${str.slice(1)}`;
 
 const dataTransformer = {
   byYear: (data: Item[]) => {
@@ -78,7 +76,7 @@ const dataTransformer = {
         item: Item
       ) => {
         const date = new Date(item.date);
-        const yearMonth = `${date.getFullYear()}-${date.getMonth()+1}`
+        const yearMonth = `${date.getFullYear()}-${date.getMonth() + 1}`;
         if (!group[yearMonth]) {
           group[yearMonth] = {
             wpm: [],
@@ -91,11 +89,13 @@ const dataTransformer = {
       },
       {}
     );
-    return Object.keys(list).map(key => ({
-      date: key,
-      [WPM]: average(list[key]?.wpm ?? []),
-      [Percentage]: average(list[key]?.percentage ?? []),
-    }));
+    return Object.keys(list)
+      .map((key) => ({
+        date: key,
+        [WPM]: average(list[key]?.wpm ?? []),
+        [Percentage]: average(list[key]?.percentage ?? []),
+      }))
+      .reverse();
   },
   byDate: (data: Item[]) => {
     const list = data.reduce(
@@ -116,11 +116,13 @@ const dataTransformer = {
       },
       {}
     );
-    return Object.keys(list).map(key => ({
-      date: key,
-      [WPM]: average(list[key]?.wpm ?? []),
-      [Percentage]: average(list[key]?.percentage ?? []),
-    }));
+    return Object.keys(list)
+      .map((key) => ({
+        date: key,
+        [WPM]: average(list[key]?.wpm ?? []),
+        [Percentage]: average(list[key]?.percentage ?? []),
+      }))
+      .reverse();
   },
 };
 
@@ -136,7 +138,21 @@ export default function Home() {
         <meta name="description" content="Typeracer Analytics" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
+      <main className="grid min-h-screen p-4 grid-cols-2 items-center gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c]">
+        {/* <PerformanceChart
+          data={
+            data.data
+              ? data.data.map(({ date, wpm, percentage }: Item) => ({
+                  date: new Date(date).toDateString(),
+                  wpm,
+                  percentage,
+                })) 
+              : []
+          }
+          index="date"
+          title="Performance History By All"
+        /> */}
+        <GeneralPerformance data={data.data ? data.data : []}/>
         <PerformanceChart
           data={data.data ? dataTransformer.byDate(data.data) : []}
           index="date"
@@ -156,6 +172,28 @@ export default function Home() {
     </>
   );
 }
+
+
+type GeneralPerformanceProps = {
+  data: Item[];
+};
+
+const GeneralPerformance = ({data}: GeneralPerformanceProps) => {
+  const wpm = average(data.map(item => item.wpm)).toFixed(2)
+  const percentage = average(data.map(item => item.percentage)).toFixed(2)
+  return (
+    <div className="grid-cols-2 grid gap-3">
+      <Card className="max-w-xs mx-auto" decoration="top" decorationColor="indigo">
+        <Text>{WPM}</Text>
+        <Metric>{wpm}</Metric>
+      </Card>
+      <Card className="max-w-xs mx-auto" decoration="top" decorationColor="indigo">
+        <Text>{Percentage}</Text>
+        <Metric>{percentage}%</Metric>
+      </Card>
+    </div>
+  )
+};
 
 type PerformanceChartProps<T> = {
   index: string;
@@ -179,7 +217,7 @@ function PerformanceChart<T>({ data, index, title }: PerformanceChartProps<T>) {
   };
 
   return (
-    <>
+    <div>
       <div className="justify-between md:flex">
         <div>
           <Flex
@@ -187,9 +225,7 @@ function PerformanceChart<T>({ data, index, title }: PerformanceChartProps<T>) {
             justifyContent="start"
             alignItems="center"
           >
-            <Title>
-              {title}
-            </Title>
+            <Title>{title}</Title>
             <Icon
               icon={InformationCircleIcon}
               variant="simple"
@@ -220,6 +256,6 @@ function PerformanceChart<T>({ data, index, title }: PerformanceChartProps<T>) {
           showYAxis={false}
         />
       </div>
-    </>
+    </div>
   );
 }
