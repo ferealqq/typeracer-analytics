@@ -124,6 +124,30 @@ const dataTransformer = {
       }))
       .reverse();
   },
+  groupByNumber: (data: Item[], num: number) => {
+    let temp : Item[] = [];
+    const list : Record<string, { wpm: number[]; percentage: number[] }> = {};
+    for(let i = 0; i < data.length; i++){
+      if(i !== 0 && i % num == 0){
+        list[`${i-num+1}-${i}`] = { 
+          wpm: temp.map((item : Item) => item.wpm),
+          percentage: temp.map((item : Item) => item.percentage)
+        }
+        temp = [];
+      }else{
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        temp.push(data[i]);
+      }
+    }
+    return Object.keys(list)
+      .map((key) => ({
+        date: key,
+        [WPM]: average(list[key]?.wpm ?? []),
+        [Percentage]: average(list[key]?.percentage ?? []),
+      }))
+      .reverse();
+  },
 };
 
 export default function Home() {
@@ -153,6 +177,11 @@ export default function Home() {
           title="Performance History By All"
         /> */}
         <GeneralPerformance data={data.data ? data.data : []}/>
+        <PerformanceChart
+          data={data.data ? dataTransformer.groupByNumber(data.data,50) : []}
+          index="date"
+          title="Performance History By 50"
+        />
         <PerformanceChart
           data={data.data ? dataTransformer.byDate(data.data) : []}
           index="date"

@@ -1,7 +1,10 @@
 import puppeteer from "puppeteer";
 
-export const firstPage =
+export const test_firstPage =
   "https://data.typeracer.com/pit/race_history?user=ferealqq&universe=play&n=100&cursor=&startDate=";
+
+export const firstPage = (username: string) =>
+  `https://data.typeracer.com/pit/race_history?user=${username}&universe=play&n=100&cursor=&startDate=`;
 
 export type PageRowItem = { wpm?: number; percentage?: number; date?: Date };
 
