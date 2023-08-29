@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import { z } from "zod";
 
 export const test_firstPage =
   "https://data.typeracer.com/pit/race_history?user=ferealqq&universe=play&n=100&cursor=&startDate=";
@@ -9,9 +10,13 @@ export const firstPage = (username: string) =>
 export type PageRowItem = { wpm?: number; percentage?: number; date?: Date };
 
 export type Page = {
-  nextPage: string;
+  nextPage: string | undefined;
   data: PageRowItem[];
   currentPage: string;
+};
+
+type EvaluateReturn = Pick<PageRowItem, "wpm" | "percentage"> & {
+  date?: string;
 };
 
 export const getPage = async (currentPage: string): Promise<Page> => {
@@ -19,7 +24,7 @@ export const getPage = async (currentPage: string): Promise<Page> => {
   // - a visible browser (`headless: false` - easier to debug because you'll see the browser in action)
   // - no default viewport (`defaultViewport: null` - website page will in full width and height)
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: "new",
   });
 
   // Open a new page
@@ -33,10 +38,10 @@ export const getPage = async (currentPage: string): Promise<Page> => {
   });
 
   // Get page data
-  const data = await page.evaluate(() => {
+  const evaluateData = await page.evaluate(() => {
     // Fetch the first element with class "quote"
     const rows = document.querySelectorAll("div.Scores__Table__Row");
-    const all: PageRowItem[] = [];
+    const all: EvaluateReturn[] = [];
     rows.forEach((row) => {
       const wpmAndPercentage = row.querySelectorAll(
         "div.profileTableHeaderRaces"
@@ -52,25 +57,16 @@ export const getPage = async (currentPage: string): Promise<Page> => {
       });
       const dateElem = row.querySelector("div.profileTableHeaderDate");
       const dateStr = dateElem?.innerHTML.trim().includes("today")
-        ? ""
+        ? undefined
         : dateElem?.innerHTML.trim();
-      console.log(
-        "date str",
-        dateStr,
-        " ",
-        dateElem?.innerHTML,
-        " date elem trim",
-        dateElem?.innerHTML.trim()
-      );
-      const date = new Date(dateStr ?? "");
       all.push({
         wpm,
         percentage,
-        date,
+        date: dateStr,
       });
     });
 
-    let nextPage = "";
+    let nextPage;
 
     const ahrefs = document.querySelectorAll("a");
     ahrefs.forEach((value) => {
@@ -81,9 +77,36 @@ export const getPage = async (currentPage: string): Promise<Page> => {
 
     return { data: all, nextPage };
   });
+  const data = {
+    nextPage: evaluateData.nextPage,
+    data: evaluateData.data.map((item) => ({
+      wpm: item.wpm,
+      percentage: item.percentage,
+      date: item.date ? new Date(item.date) : new Date(), // for some reason this cannot be done inside the evaluate
+    })),
+  };
 
   // Close the browser
   await browser.close();
 
   return { currentPage, nextPage: data.nextPage, data: data.data };
 };
+
+export const DataType = z.object({
+  id: z.string(),
+  wpm: z.number(),
+  percentage: z.number(),
+  username: z.string(),
+  date: z.date(),
+});
+
+export type DataType = z.infer<typeof DataType>;
+
+export const InsertDataType = DataType.pick({
+  wpm: true,
+  percentage: true,
+  username: true,
+  date: true,
+});
+
+export type InsertDataType = z.infer<typeof InsertDataType>;

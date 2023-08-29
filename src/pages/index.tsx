@@ -125,16 +125,16 @@ const dataTransformer = {
       .reverse();
   },
   groupByNumber: (data: Item[], num: number) => {
-    let temp : Item[] = [];
-    const list : Record<string, { wpm: number[]; percentage: number[] }> = {};
-    for(let i = 0; i < data.length; i++){
-      if(i !== 0 && i % num == 0){
-        list[`${i-num+1}-${i}`] = { 
-          wpm: temp.map((item : Item) => item.wpm),
-          percentage: temp.map((item : Item) => item.percentage)
-        }
+    let temp: Item[] = [];
+    const list: Record<string, { wpm: number[]; percentage: number[] }> = {};
+    for (let i = 0; i < data.length; i++) {
+      if (i !== 0 && i % num == 0) {
+        list[`${i - num + 1}-${i}`] = {
+          wpm: temp.map((item: Item) => item.wpm),
+          percentage: temp.map((item: Item) => item.percentage),
+        };
         temp = [];
-      }else{
+      } else {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         temp.push(data[i]);
@@ -152,8 +152,9 @@ const dataTransformer = {
 
 export default function Home() {
   const data = api.example.getAll.useQuery<Item[]>();
-  console.log("data.data");
-  console.log(data.data);
+  const mutation = api.example.createPersonalData.useMutation();
+  console.log(mutation.status)
+  console.log(mutation.data)
 
   return (
     <>
@@ -162,7 +163,16 @@ export default function Home() {
         <meta name="description" content="Typeracer Analytics" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="grid min-h-screen p-4 grid-cols-2 items-center gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c]">
+      <main className="grid min-h-screen grid-cols-2 items-center gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] p-4">
+        <button
+          className="rounded-lg bg-indigo-500 text-white"
+          onClick={() => {
+            console.log("on click")
+            mutation.mutate({username: "ferealqq"})
+          }}
+        >
+          Refresh
+        </button>
         {/* <PerformanceChart
           data={
             data.data
@@ -176,9 +186,9 @@ export default function Home() {
           index="date"
           title="Performance History By All"
         /> */}
-        <GeneralPerformance data={data.data ? data.data : []}/>
+        <GeneralPerformance data={mutation.isSuccess ? mutation.data : []} />
         <PerformanceChart
-          data={data.data ? dataTransformer.groupByNumber(data.data,50) : []}
+          data={mutation.isSuccess ? dataTransformer.groupByNumber(mutation.data, 50) : []}
           index="date"
           title="Performance History By 50"
         />
@@ -202,26 +212,33 @@ export default function Home() {
   );
 }
 
-
 type GeneralPerformanceProps = {
   data: Item[];
 };
 
-const GeneralPerformance = ({data}: GeneralPerformanceProps) => {
-  const wpm = average(data.map(item => item.wpm)).toFixed(2)
-  const percentage = average(data.map(item => item.percentage)).toFixed(2)
+const GeneralPerformance = ({ data }: GeneralPerformanceProps) => {
+  const wpm = average(data.map((item) => item.wpm)).toFixed(2);
+  const percentage = average(data.map((item) => item.percentage)).toFixed(2);
   return (
-    <div className="grid-cols-2 grid gap-3">
-      <Card className="max-w-xs mx-auto" decoration="top" decorationColor="indigo">
+    <div className="grid grid-cols-2 gap-3">
+      <Card
+        className="mx-auto max-w-xs"
+        decoration="top"
+        decorationColor="indigo"
+      >
         <Text>{WPM}</Text>
         <Metric>{wpm}</Metric>
       </Card>
-      <Card className="max-w-xs mx-auto" decoration="top" decorationColor="indigo">
+      <Card
+        className="mx-auto max-w-xs"
+        decoration="top"
+        decorationColor="indigo"
+      >
         <Text>{Percentage}</Text>
         <Metric>{percentage}%</Metric>
       </Card>
     </div>
-  )
+  );
 };
 
 type PerformanceChartProps<T> = {
