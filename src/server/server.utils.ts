@@ -7,6 +7,8 @@ export const test_firstPage =
 export const firstPage = (username: string) =>
   `https://data.typeracer.com/pit/race_history?user=${username}&universe=play&n=100&cursor=&startDate=`;
 
+// https://data.typeracer.com/pit/race_history?user=ferealqq&n=100&endDate=2023-08-29&universe=
+
 export const getPage = async (currentPage: string): Promise<Page> => {
   // Start a Puppeteer session with:
   // - a visible browser (`headless: false` - easier to debug because you'll see the browser in action)

@@ -1,9 +1,11 @@
 import { expect, test } from "vitest";
-import { test_firstPage, getPage, InsertDataType } from "./server.utils";
-import { ZodError, z } from "zod";
+import { test_firstPage, getPage } from "./server.utils";
+import { InsertDataType } from "./types";
+import { ZodError } from "zod";
 
 test("Test Get Page", async () => {
   const page = await getPage(test_firstPage);
+  console.log(page.data[0]);
   expect(page.data.length).toBe(100);
   expect(page.nextPage).toContain(
     "https://data.typeracer.com/pit/race_history?user=ferealqq&universe=play&n=100&cursor="
@@ -16,9 +18,4 @@ test("Test Get Page", async () => {
   }));
 
   expect(val.parse(data)).not.toThrow(ZodError);
-});
-
-test("should first", () => {
-  console.log("should log to console");
-  expect(true);
 });
