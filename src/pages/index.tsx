@@ -153,8 +153,8 @@ const dataTransformer = {
 export default function Home() {
   const data = api.example.getAll.useQuery<Item[]>();
   const mutation = api.example.createPersonalData.useMutation();
-  console.log(mutation.status)
-  console.log(mutation.data)
+  console.log(mutation.status);
+  console.log(mutation.data);
 
   return (
     <>
@@ -164,31 +164,31 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="grid min-h-screen grid-cols-2 items-center gap-4 bg-gradient-to-b from-[#2e026d] to-[#15162c] p-4">
-        <button
-          className="rounded-lg bg-indigo-500 text-white"
-          onClick={() => {
-            console.log("on click")
-            mutation.mutate({username: "ferealqq"})
-          }}
-        >
-          Refresh
-        </button>
-        {/* <PerformanceChart
-          data={
-            data.data
-              ? data.data.map(({ date, wpm, percentage }: Item) => ({
-                  date: new Date(date).toDateString(),
-                  wpm,
-                  percentage,
-                })) 
-              : []
-          }
-          index="date"
-          title="Performance History By All"
-        /> */}
-        <GeneralPerformance data={mutation.isSuccess ? mutation.data : []} />
+        <div className="grid grid-cols-2 items-center gap-3">
+          <button
+            className="rounded-lg bg-indigo-500 text-white"
+            onClick={() => {
+              console.log("on click");
+              mutation.mutate({ username: "ferealqq" });
+            }}
+          >
+            Fetch data
+          </button>
+          <button
+            className="rounded-lg bg-indigo-500 text-white"
+            onClick={() => {
+              console.log("on click");
+              // mutation.mutate({username: "ferealqq"})
+            }}
+          >
+            Refresh
+          </button>
+          <GeneralPerformance data={data.isSuccess ? data.data : []} />
+        </div>
         <PerformanceChart
-          data={mutation.isSuccess ? dataTransformer.groupByNumber(mutation.data, 50) : []}
+          data={
+            data.isSuccess ? dataTransformer.groupByNumber(data.data, 30) : []
+          }
           index="date"
           title="Performance History By 50"
         />
@@ -220,7 +220,7 @@ const GeneralPerformance = ({ data }: GeneralPerformanceProps) => {
   const wpm = average(data.map((item) => item.wpm)).toFixed(2);
   const percentage = average(data.map((item) => item.percentage)).toFixed(2);
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <>
       <Card
         className="mx-auto max-w-xs"
         decoration="top"
@@ -237,7 +237,7 @@ const GeneralPerformance = ({ data }: GeneralPerformanceProps) => {
         <Text>{Percentage}</Text>
         <Metric>{percentage}%</Metric>
       </Card>
-    </div>
+    </>
   );
 };
 
