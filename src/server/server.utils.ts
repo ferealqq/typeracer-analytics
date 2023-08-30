@@ -1,23 +1,11 @@
 import puppeteer from "puppeteer";
-import { z } from "zod";
+import { type EvaluateReturn, type Page } from "./types";
 
 export const test_firstPage =
   "https://data.typeracer.com/pit/race_history?user=ferealqq&universe=play&n=100&cursor=&startDate=";
 
 export const firstPage = (username: string) =>
   `https://data.typeracer.com/pit/race_history?user=${username}&universe=play&n=100&cursor=&startDate=`;
-
-export type PageRowItem = { wpm?: number; percentage?: number; date?: Date };
-
-export type Page = {
-  nextPage: string | undefined;
-  data: PageRowItem[];
-  currentPage: string;
-};
-
-type EvaluateReturn = Pick<PageRowItem, "wpm" | "percentage"> & {
-  date?: string;
-};
 
 export const getPage = async (currentPage: string): Promise<Page> => {
   // Start a Puppeteer session with:
@@ -55,11 +43,16 @@ export const getPage = async (currentPage: string): Promise<Page> => {
           percentage = parseFloat(value.innerHTML.replace("%", ""));
         }
       });
+      const raceNumber = parseInt(
+        row.querySelector("div.profileTableHeaderUniverse > a")?.innerHTML ??
+          "0"
+      );
       const dateElem = row.querySelector("div.profileTableHeaderDate");
       const dateStr = dateElem?.innerHTML.trim().includes("today")
         ? undefined
         : dateElem?.innerHTML.trim();
       all.push({
+        raceNumber,
         wpm,
         percentage,
         date: dateStr,
@@ -80,8 +73,7 @@ export const getPage = async (currentPage: string): Promise<Page> => {
   const data = {
     nextPage: evaluateData.nextPage,
     data: evaluateData.data.map((item) => ({
-      wpm: item.wpm,
-      percentage: item.percentage,
+      ...item,
       date: item.date ? new Date(item.date) : new Date(), // for some reason this cannot be done inside the evaluate
     })),
   };
@@ -91,22 +83,3 @@ export const getPage = async (currentPage: string): Promise<Page> => {
 
   return { currentPage, nextPage: data.nextPage, data: data.data };
 };
-
-export const DataType = z.object({
-  id: z.string(),
-  wpm: z.number(),
-  percentage: z.number(),
-  username: z.string(),
-  date: z.date(),
-});
-
-export type DataType = z.infer<typeof DataType>;
-
-export const InsertDataType = DataType.pick({
-  wpm: true,
-  percentage: true,
-  username: true,
-  date: true,
-});
-
-export type InsertDataType = z.infer<typeof InsertDataType>;

@@ -1,18 +1,8 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import {
-  DataType,
-  InsertDataType,
-  PageRowItem,
-  firstPage,
-  getPage,
-} from "~/server/server.utils";
+import { DataType } from "~/server/types";
+import { firstPage, getPage } from "~/server/server.utils";
 import { v4 as uuid } from "uuid";
-
-// const fetchPageRecursive = (url : string) => {
-//   let nextPage = url;
-
-// }
 
 export const exampleRouter = createTRPCRouter({
   hello: publicProcedure
@@ -23,10 +13,10 @@ export const exampleRouter = createTRPCRouter({
       };
     }),
   getAll: publicProcedure.query(async ({ ctx }) => {
-    const data = await ctx.prisma.data.findMany();
+    const data = await ctx.prisma.data.findMany({ orderBy: { date: "desc" } });
     return data;
   }),
-  createPersonalData: publicProcedure
+  createUserData: publicProcedure
     .input(z.object({ username: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const url = firstPage(input.username);
@@ -52,7 +42,7 @@ export const exampleRouter = createTRPCRouter({
           username: input.username,
           // TODO what the fuck
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          id: uuid() as string,
+          id: uuid(),
         }))
       );
       console.log(`starting to create data`);

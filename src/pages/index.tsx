@@ -16,14 +16,7 @@ import {
 } from "@tremor/react";
 import { api } from "~/utils/api";
 import { useState } from "react";
-
-type Item = {
-  id: string;
-  username: string;
-  wpm: number;
-  percentage: number;
-  date: Date;
-};
+import { DataType } from "~/server/types";
 
 type KPI = "Words per minute" | "Percentage";
 
@@ -44,11 +37,11 @@ const average = (list: number[]): number => {
 };
 
 const dataTransformer = {
-  byYear: (data: Item[]) => {
+  byYear: (data: DataType[]) => {
     const years = data.reduce(
       (
         group: Record<number, { wpm: number[]; percentage: number[] }>,
-        item: Item
+        item: DataType
       ) => {
         const year = new Date(item.date).getFullYear();
         if (!group[year]) {
@@ -69,11 +62,11 @@ const dataTransformer = {
       [Percentage]: average(years[parseInt(year)]?.percentage ?? []),
     }));
   },
-  byMonth: (data: Item[]) => {
+  byMonth: (data: DataType[]) => {
     const list = data.reduce(
       (
         group: Record<string, { wpm: number[]; percentage: number[] }>,
-        item: Item
+        item: DataType
       ) => {
         const date = new Date(item.date);
         const yearMonth = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -97,11 +90,11 @@ const dataTransformer = {
       }))
       .reverse();
   },
-  byDate: (data: Item[]) => {
+  byDate: (data: DataType[]) => {
     const list = data.reduce(
       (
         group: Record<string, { wpm: number[]; percentage: number[] }>,
-        item: Item
+        item: DataType
       ) => {
         const date = new Date(item.date).toDateString();
         if (!group[date]) {
@@ -124,20 +117,20 @@ const dataTransformer = {
       }))
       .reverse();
   },
-  groupByNumber: (data: Item[], num: number) => {
-    let temp: Item[] = [];
+  groupByNumber: (data: DataType[], num: number) => {
+    let temp: DataType[] = [];
     const list: Record<string, { wpm: number[]; percentage: number[] }> = {};
     for (let i = 0; i < data.length; i++) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      temp.push(data[i]);
       if (i !== 0 && i % num == 0) {
-        list[`${i - num + 1}-${i}`] = {
-          wpm: temp.map((item: Item) => item.wpm),
-          percentage: temp.map((item: Item) => item.percentage),
+        // TODO shit broke returns 4-34 sometimes and sometimes 306-325
+        list[`${data[i]?.raceNumber}-${data[i-num]?.raceNumber}-${i}-${i-num}`] = {
+          wpm: temp.map((item: DataType) => item.wpm),
+          percentage: temp.map((item: DataType) => item.percentage),
         };
         temp = [];
-      } else {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        temp.push(data[i]);
       }
     }
     return Object.keys(list)
@@ -151,10 +144,10 @@ const dataTransformer = {
 };
 
 export default function Home() {
-  const data = api.example.getAll.useQuery<Item[]>();
-  const mutation = api.example.createPersonalData.useMutation();
-  console.log(mutation.status);
-  console.log(mutation.data);
+  const data = api.example.getAll.useQuery<DataType[]>();
+  const createUserData = api.example.createUserData.useMutation({onSuccess:() => data.refetch()});
+  console.log(createUserData.status);
+  console.log(createUserData.data);
 
   return (
     <>
@@ -169,7 +162,7 @@ export default function Home() {
             className="rounded-lg bg-indigo-500 text-white"
             onClick={() => {
               console.log("on click");
-              mutation.mutate({ username: "ferealqq" });
+              createUserData.mutate({ username: "ferealqq" });
             }}
           >
             Fetch data
@@ -213,7 +206,7 @@ export default function Home() {
 }
 
 type GeneralPerformanceProps = {
-  data: Item[];
+  data: DataType[];
 };
 
 const GeneralPerformance = ({ data }: GeneralPerformanceProps) => {

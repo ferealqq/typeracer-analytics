@@ -9,6 +9,7 @@ datasource db {
 
 model Data {
   id         String   @id
+  raceNumber Int 
   username   String
   wpm        Int
   percentage Float
